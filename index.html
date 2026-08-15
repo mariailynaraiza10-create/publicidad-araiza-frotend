@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Publicidad Araiza</title>
+
+    <link
+        rel="icon"
+          type="image/png"
+        href="logo.png"
+
+    >
+
+    <link
+        rel="stylesheet"
+        href="estilos.css"
+    >
+
+</head>
+
+
+<body>
+
+
+<div class="fondo"></div>
+
+
+<header>
+
+    <div class="marca">
+
+        <img
+            src="logo.jpeg"
+            alt="Publicidad Araiza"
+        >
+
+        <div>
+
+            <h1>
+                Publicidad Araiza
+            </h1>
+
+            <p>
+                Panel de publicidad
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div
+        id="estadoWhatsApp"
+        class="estado desconectado"
+    >
+        🔴 WhatsApp desconectado
+    </div>
+
+</header>
+
+
+
+<main>
+
+
+<section class="panel">
+
+    <h2>
+        📢 Mensajes publicitarios
+    </h2>
+
+    <p class="descripcion">
+
+        Cada mensaje tiene 32 botones.
+        Puedes asignar hasta 5 grupos específicos
+        a cada botón.
+
+    </p>
+
+
+    <div id="mensajes"></div>
+
+</section>
+
+
+
+<section class="panel">
+
+    <h2>
+        👥 Grupos de WhatsApp
+    </h2>
+
+
+    <p class="descripcion">
+
+        Conecta tu WhatsApp y pulsa el botón
+        para cargar tus grupos.
+
+    </p>
+
+
+    <button
+        class="boton-principal"
+        onclick="cargarGrupos()"
+    >
+
+        🔄 Cargar grupos
+
+    </button>
+
+
+    <div id="resultadoGrupos">
+
+    </div>
+
+
+    <div
+        id="listaGrupos"
+        class="lista-grupos"
+    >
+
+    </div>
+
+</section>
+
+
+
+<section class="panel">
+
+    <h2>
+        📊 Estado del envío
+    </h2>
+
+
+    <div
+        id="estadoEnvio"
+        class="estado-envio"
+    >
+
+        Esperando...
+
+    </div>
+
+
+    <button
+        class="boton-detener"
+        onclick="detenerEnvio()"
+    >
+
+        ⛔ Detener
+
+    </button>
+
+</section>
+
+
+</main>
+
+
+
+<!-- ==================================================
+     MODAL
+================================================== -->
+
+<div
+    id="modal"
+    class="modal"
+>
+
+
+    <div class="modal-contenido">
+
+
+        <button
+            class="cerrar"
+            onclick="cerrarModal()"
+        >
+
+            ×
+
+        </button>
+
+
+        <h2 id="tituloModal">
+
+            Seleccionar grupos
+
+        </h2>
+
+
+        <p class="texto-modal">
+
+            Selecciona máximo 5 grupos para este botón.
+
+        </p>
+
+
+        <div
+            id="contadorSeleccion"
+            class="contador-seleccion"
+        >
+
+            0 / 5
+
+        </div>
+
+
+        <div
+            id="gruposModal"
+            class="grupos-modal"
+        >
+
+        </div>
+
+
+        <button
+            class="boton-principal"
+            onclick="guardarGrupos()"
+        >
+
+            💾 Guardar grupos
+
+        </button>
+
+
+    </div>
+
+</div>
+
+
+
+<script>
+
+
+const API_URL =
+"https://publicidad-araiza-backend.onrender.com/";
+
+
+let grupos = [];
+
+
+let mensajeSeleccionado =
+    null;
+
+
+let botonSeleccionado =
+    null;
+
+
+let gruposSeleccionados =
+    new Set();
+
+
+// ======================================================
+// MENSAJES PARA MOSTRAR EN EL PANEL
+// ======================================================
+
+const mensajes = {
+
+
+    1: {
+
+        titulo:
+            "Venta de cuentas y perfiles",
+
+        imagen:
+            "individual.jpeg",
+
+        texto:
+`🎬*Venta de cuentas y perfiles Premium*🍿
+Plataformas streaming Araiza ✨
+💥 *entrega inmediata* 💥
+
+PERFILES 
+🪄Disney premium $50
+🔹Prime video $35
+🔸Vix $25
+Vix 6 m $40
+Vix 1año $65
+🔹Paramount + $25
+🔸Crunchyroll $25
+◾️Max $35
+⚽️Fox One $50
+🍎Apple TV $50
+🔺Netflix $75 renovables acceso a cod de hogar
+🎶Deezer $35
+YouTube 3 meses $150
+Spotify 1 mes $60
+Spotify 3 meses $150
+Y más`
+
+    },
+
+
+    2: {
+
+        titulo:
+            "Combos",
+
+        imagen:
+            "combo1.jpeg",
+
+        texto:
+`*PLATAFORMAS STREAMING ARAIZA*
+                       *COMBOS*
+
+🥉*Combo Bronce*
+• 𝑉𝐼𝑋
+• 𝐶𝑅𝑈𝑁𝐶𝐻𝑌𝑅𝑂𝐿𝐿
+• PARAMOUNT 
+💲70
+
+*🥈Combo Plata*
+• 𝑃𝑅𝐼𝑀𝐸
+• ⁠_Vix_
+• 𝑃𝐴𝑅𝐴𝑀𝑂𝑈𝑁𝑇
+• 𝐻𝐵𝑂 𝑀𝐴𝑋 
+💲110
+
+🥇*Combo Oro*
+• 𝐷𝑖𝑠𝑛𝑒𝑦 
+• 𝐻𝑏𝑜 𝑀𝑎𝑥
+• 𝑃𝑟𝑖𝑚𝑒 𝑉𝑖𝑑𝑒𝑜
+• 𝑃𝑎𝑟𝑎𝑚𝑜𝑢𝑛𝑡
+💲130 
+
+🪩*Combo Platino*
+• 𝑁𝐸𝑇𝐹𝐿𝐼𝑋
+• 𝐷𝐼𝑆𝑁𝐸𝑌
+• 𝐻𝐵𝑂
+💲135
+
+💎*Combo Diamante*
+• 𝑁𝑒𝑡𝑓𝑙𝑖𝑥
+• 𝐷𝑖𝑠𝑛𝑒𝑦 
+• 𝐻𝑏𝑜 𝑀𝑎𝑥
+• 𝑃𝑟𝑖𝑚𝑒 𝑉𝑖𝑑𝑒𝑜
+💲165
+
+🏅*Combo pro*
+• 𝑁𝑒𝑡𝑓𝑙𝑖𝑥
+• 𝑑𝑖𝑠𝑛𝑒𝑦 
+• 𝐻𝑏𝑜 𝑀𝑎𝑥
+• 𝑃𝑟𝑖𝑚𝑒 𝑉𝑖𝑑𝑒𝑜
+• 𝑃𝑎𝑟𝑎𝑚𝑜𝑢𝑛𝑡
+💲175
+
+Pregunta con confianza tengo referencias, cuentas garantizada`
+
+    },
+
+
+    3: {
+
+        titulo:
+            "Combos completos",
+
+        imagen:
+            "combo5.jpeg",
+
+        texto:
+`🎬 PLATAFORMAS STREAMING ARAIZA 🎬
+
+✨ Todo tu entretenimiento en un solo lugar
+
+✅ Cuentas completas y privadas
+✅ Solo para usted
+✅ Acceso hasta en 5 dispositivos
+✅ Plataformas Premium
+✅ Vigencia de 1 mes
+
+📦 Nuestros Combos
+
+🟢 ESENCIAL – $300
+✔️ Disney+
+✔️ Prime Video
+✔️ Max
+✔️ ViX Premium o Paramount+
+
+🔵 PLUS – $540
+✔️ Netflix
+✔️ Disney+
+✔️ Prime Video
+✔️ Max
+✔️ ViX Premium o Paramount+
+
+🟣 PREMIUM – $650
+✔️ Netflix
+✔️ Disney+
+✔️ Prime Video
+✔️ Max
+✔️ ViX Premium
+✔️ Paramount+
+✔️ Crunchyroll
+
+🟠 ULTRA – $750
+✔️ Netflix
+✔️ Disney+
+✔️ Prime Video
+✔️ Max
+✔️ Paramount+
+✔️ Crunchyroll
+✔️ ViX Premium
+✔️ Fox One
+✔️ IPTV
+
+🎯 COMBO PERSONALIZADO
+¡Tú armas tu combo al mejor precio!
+Solo escoge tus aplicaciones favoritas y yo te doy un increíble precio.
+
+🚀 Entrega rápida
+📲 Compatible con Smart TV, Android, iPhone, PC y Tablet
+⚡ Activación el mismo día
+
+📱 Pedidos y más información por WhatsApp:
+662 124 3043
+
+🔥 ¡Pregunta por nuestras promociones y arma el combo perfecto para ti!`
+
+    },
+
+
+    4: {
+
+        titulo:
+            "Nuevos servicios",
+
+        imagen:
+            null,
+
+        texto:
+`*Nuevos servicios*
+ 
+🧩🗂️ Documentos Disponibles 🗂️🧩
+⏰ Horario: 9:00a.m. a 9:00 p.m.
+ 
+📄 Trámites y Servicios Express:
+ 
+💖 Actas – $85
+(Nacimiento, Matrimonio, Defunción, Divorcio)
+
+💖 Constancia situación fiscal rfc Actualizado
+
+✨ Con RFC – $140
+⏳ (1 a 7 horas)
+
+✨ Con ID CIF y RFC – $100
+⏳ (20 a 45 minutos)
+
+✨ Clon solo con Curp - $90
+⏳ (20 a 45 minutos)
+
+💖 CURP Actualizado – $50
+💖 NSS (Seguro Social) – $70
+💖 Semanas Cotizadas – $90
+✨ Antecedentes no penales $85
+✨ LOCALIZAR TU AFORE $75
+✨ Recibo CFE $76
+ 
+🚨💬 Querida/o cliente, recuerda:
+No hay reembolsos si no está verificando tu Curp o documento erróneo`
+
+    },
+
+
+    5: {
+
+        titulo:
+            "Películas MP4",
+
+        imagen:
+            "peli.jpeg",
+
+        texto:
+`🍿*PELICULAS EN MP4*🍿
+
+🍄*Super Mario Galaxy*⭐️💫
+🍌*Minions & Monsters*🧟‍♂️
+🧸*TOY STORY 5🧸*
+🌊*Moana Live Action*🌊
+
+*$15 c/u o $50 por todas*
+
+⚠️Verla sin conexión wifi
+⚠️Se manda por WhatsApp por archivo MP4
+⚠️Puede verla cuando quiera
+
+💳Pago por transferencia`
+
+    },
+
+
+    6: {
+
+        titulo:
+            "ViX",
+
+        imagen:
+            "vix.jpeg",
+
+        texto:
+            ""
+
+    }
+
+};
+
+
+// ======================================================
+// CREAR LOS 6 MENSAJES
+// ======================================================
+
+function crearMensajes() {
+
+
+    const contenedor =
+        document.getElementById(
+            "mensajes"
+        );
+
+
+    contenedor.innerHTML = "";
+
+
+    for(
+        let numero = 1;
+        numero <= 6;
+        numero++
+    ) {
+
+
+        const datos =
+            mensajes[numero];
+
+
+        const tarjeta =
+            document.createElement(
+                "div"
+            );
+
+
+        tarjeta.className =
+            "mensaje";
+
+
+        let botones = "";
+
+
+        for(
+            let boton = 1;
+            boton <= 32;
+            boton++
+        ) {
+
+
+            const inicio =
+                ((boton - 1) * 5) + 1;
+
+
+            const fin =
+                Math.min(
+                    boton * 5,
+                    156
+                );
+
+
+            botones += `
+
+                <div class="grupo-boton">
+
+                    <button
+                        class="boton-enviar"
+                        onclick="
+                            enviarMensaje(
+                                ${numero},
+                                ${boton}
+                            )
+                        "
+                    >
+
+                        📤 ENVIAR
+
+                        <span>
+                            Botón ${boton}
+                        </span>
+
+                        <small>
+                            Grupos ${inicio}-${fin}
+                        </small>
+
+                    </button>
+
+
+                    <button
+                        class="boton-grupos"
+                        onclick="
+                            abrirGrupos(
+                                ${numero},
+                                ${boton}
+                            )
+                        "
+                    >
+
+                        ⚙️ Grupos
+
+                    </button>
+
+                </div>
+
+            `;
+
+        }
+
+
+        tarjeta.innerHTML = `
+
+            <div class="cabecera-mensaje">
+
+                <div>
+
+                    <span class="numero">
+                        ${numero}
+                    </span>
+
+                    <div class="titulo">
+
+                        <h3>
+                            MENSAJE ${numero}
+                        </h3>
+
+                        <p>
+                            ${datos.titulo}
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                ${
+                    datos.imagen
+                    ?
+                    `
+                    <img
+                        src="${datos.imagen}"
+                        class="miniatura"
+                    >
+                    `
+                    :
+                    ""
+                }
+
+            </div>
+
+
+            <details>
+
+                <summary>
+                    👁️ Ver mensaje
+                </summary>
+
+
+                ${
+                    datos.imagen
+                    ?
+                    `
+                    <img
+                        src="${datos.imagen}"
+                        class="imagen-preview"
+                    >
+                    `
+                    :
+                    ""
+                }
+
+
+                <pre>
+${datos.texto || "Esta publicación solamente lleva imagen."}
+                </pre>
+
+            </details>
+
+
+            <div class="botones">
+
+                ${botones}
+
+            </div>
+
+        `;
+
+
+        contenedor.appendChild(
+            tarjeta
+        );
+
+    }
+
+}
+
+
+// ======================================================
+// CARGAR GRUPOS
+// ======================================================
+
+async function cargarGrupos() {
+
+
+    const resultado =
+        document.getElementById(
+            "resultadoGrupos"
+        );
+
+
+    resultado.innerHTML =
+        "⏳ Cargando grupos...";
+
+
+    try {
+
+
+        const respuesta =
+            await fetch(
+                `${API_URL}/api/grupos`
+            );
+
+
+        const datos =
+            await respuesta.json();
+
+
+        if(
+            !respuesta.ok
+        ) {
+
+            throw new Error(
+                datos.error
+            );
+
+        }
+
+
+        grupos =
+            datos;
+
+
+        resultado.innerHTML =
+
+            `🟢 ${grupos.length} grupos encontrados y guardados en MongoDB.`;
+
+
+        mostrarGrupos();
+
+
+    }
+
+    catch(error) {
+
+
+        resultado.innerHTML =
+            `❌ ${error.message}`;
+
+    }
+
+}
+
+
+// ======================================================
+// MOSTRAR GRUPOS
+// ======================================================
+
+function mostrarGrupos() {
+
+
+    const contenedor =
+        document.getElementById(
+            "listaGrupos"
+        );
+
+
+    contenedor.innerHTML = "";
+
+
+    grupos.forEach(
+        (grupo, indice) => {
+
+
+            const elemento =
+                document.createElement(
+                    "div"
+                );
+
+
+            elemento.className =
+                "grupo";
+
+
+            elemento.innerHTML = `
+
+                <strong>
+                    ${indice + 1}.
+                    ${grupo.nombre}
+                </strong>
+
+                <small>
+                    ${grupo.id}
+                </small>
+
+            `;
+
+
+            contenedor.appendChild(
+                elemento
+            );
+
+        }
+    );
+
+}
+
+
+// ======================================================
+// ABRIR GRUPOS DE BOTÓN
+// ======================================================
+
+async function abrirGrupos(
+    mensaje,
+    boton
+) {
+
+
+    mensajeSeleccionado =
+        mensaje;
+
+
+    botonSeleccionado =
+        boton;
+
+
+    gruposSeleccionados =
+        new Set();
+
+
+    document.getElementById(
+        "tituloModal"
+    ).textContent =
+
+        `Mensaje ${mensaje} — Botón ${boton}`;
+
+
+    try {
+
+
+        const respuesta =
+            await fetch(
+
+                `${API_URL}/api/asignaciones/${mensaje}/${boton}`
+
+            );
+
+
+        const datos =
+            await respuesta.json();
+
+
+        if(
+            respuesta.ok
+        ) {
+
+            gruposSeleccionados =
+                new Set(
+                    datos.grupos
+                );
+
+        }
+
+
+    }
+
+    catch(error) {
+
+        console.log(
+            error
+        );
+
+    }
+
+
+    mostrarGruposModal();
+
+
+    document.getElementById(
+        "modal"
+    ).classList.add(
+        "mostrar"
+    );
+
+}
+
+
+// ======================================================
+// MOSTRAR GRUPOS EN MODAL
+// ======================================================
+
+function mostrarGruposModal() {
+
+
+    const contenedor =
+        document.getElementById(
+            "gruposModal"
+        );
+
+
+    contenedor.innerHTML = "";
+
+
+    if(
+        grupos.length === 0
+    ) {
+
+        contenedor.innerHTML = `
+
+            <div class="sin-grupos">
+
+                Primero pulsa
+                <b>🔄 Cargar grupos</b>.
+
+            </div>
+
+        `;
+
+        actualizarContador();
+
+        return;
+
+    }
+
+
+    grupos.forEach(
+        grupo => {
+
+
+            const seleccionado =
+                gruposSeleccionados.has(
+                    grupo.id
+                );
+
+
+            const label =
+                document.createElement(
+                    "label"
+                );
+
+
+            label.className =
+                "grupo-check";
+
+
+            label.innerHTML = `
+
+                <input
+                    type="checkbox"
+
+                    ${
+                        seleccionado
+                        ?
+                        "checked"
+                        :
+                        ""
+                    }
+
+                    onchange="
+                        seleccionarGrupo(
+                            this,
+                            '${grupo.id}'
+                        )
+                    "
+                >
+
+                <span>
+                    ${grupo.nombre}
+                </span>
+
+            `;
+
+
+            contenedor.appendChild(
+                label
+            );
+
+        }
+    );
+
+
+    actualizarContador();
+
+}
+
+
+// ======================================================
+// SELECCIONAR GRUPO
+// ======================================================
+
+function seleccionarGrupo(
+    checkbox,
+    id
+) {
+
+
+    if(
+        checkbox.checked
+    ) {
+
+
+        if(
+            gruposSeleccionados.size >= 5
+        ) {
+
+
+            checkbox.checked =
+                false;
+
+
+            alert(
+                "⚠️ Máximo 5 grupos por botón."
+            );
+
+
+            return;
+
+        }
+
+
+        gruposSeleccionados.add(
+            id
+        );
+
+
+    }
+
+    else {
+
+
+        gruposSeleccionados.delete(
+            id
+        );
+
+    }
+
+
+    actualizarContador();
+
+}
+
+
+// ======================================================
+// CONTADOR
+// ======================================================
+
+function actualizarContador() {
+
+
+    document.getElementById(
+        "contadorSeleccion"
+    ).textContent =
+
+        `${gruposSeleccionados.size} / 5 grupos seleccionados`;
+
+}
+
+
+// ======================================================
+// GUARDAR
+// ======================================================
+
+async function guardarGrupos() {
+
+
+    try {
+
+
+        const respuesta =
+            await fetch(
+                `${API_URL}/api/asignaciones`,
+                {
+
+                    method:
+                        "PUT",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            mensaje:
+                                mensajeSeleccionado,
+
+                            boton:
+                                botonSeleccionado,
+
+                            grupos:
+                                [
+                                    ...gruposSeleccionados
+                                ]
+
+                        })
+
+                }
+            );
+
+
+        const datos =
+            await respuesta.json();
+
+
+        if(
+            !respuesta.ok
+        ) {
+
+            throw new Error(
+                datos.error
+            );
+
+        }
+
+
+        cerrarModal();
+
+
+        alert(
+            `✅ Guardado.\n\nMensaje ${mensajeSeleccionado}, botón ${botonSeleccionado}.\n\n${datos.grupos.length} grupo(s) asignado(s).`
+        );
+
+
+    }
+
+    catch(error) {
+
+
+        alert(
+            "❌ " +
+            error.message
+        );
+
+    }
+
+}
+
+
+// ======================================================
+// CERRAR MODAL
+// ======================================================
+
+function cerrarModal() {
+
+
+    document.getElementById(
+        "modal"
+    ).classList.remove(
+        "mostrar"
+    );
+
+}
+
+
+// ======================================================
+// ENVIAR
+// ======================================================
+
+async function enviarMensaje(
+    mensaje,
+    boton
+) {
+
+
+    const confirmar =
+        confirm(
+
+            `¿Enviar el MENSAJE ${mensaje} a los grupos del BOTÓN ${boton}?`
+
+        );
+
+
+    if(
+        !confirmar
+    ) {
+
+        return;
+
+    }
+
+
+    const estado =
+        document.getElementById(
+            "estadoEnvio"
+        );
+
+
+    estado.innerHTML =
+        `⏳ Preparando envío...`;
+
+
+    try {
+
+
+        const respuesta =
+            await fetch(
+                `${API_URL}/api/enviar`,
+                {
+
+                    method:
+                        "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            mensaje:
+                                mensaje,
+
+                            boton:
+                                boton
+
+                        })
+
+                }
+            );
+
+
+        const datos =
+            await respuesta.json();
+
+
+        if(
+            !respuesta.ok
+        ) {
+
+            throw new Error(
+                datos.error
+            );
+
+        }
+
+
+        estado.innerHTML =
+
+            `📤 Enviando a ${datos.total} grupo(s). Revisa PowerShell para ver el progreso.`;
+
+
+    }
+
+    catch(error) {
+
+
+        estado.innerHTML =
+            `❌ ${error.message}`;
+
+    }
+
+}
+
+
+// ======================================================
+// DETENER
+// ======================================================
+
+async function detenerEnvio() {
+
+
+    try {
+
+
+        await fetch(
+            `${API_URL}/api/detener`,
+            {
+
+                method:
+                    "POST"
+
+            }
+        );
+
+
+        document.getElementById(
+            "estadoEnvio"
+        ).innerHTML =
+
+            "⛔ Solicitud de detención enviada.";
+
+
+    }
+
+    catch(error) {
+
+
+        console.log(
+            error
+        );
+
+    }
+
+}
+
+
+// ======================================================
+// ESTADO WHATSAPP
+// ======================================================
+
+async function comprobarWhatsApp() {
+
+
+    try {
+
+
+        const respuesta =
+            await fetch(
+                `${API_URL}/api/whatsapp/estado`
+            );
+
+
+        const datos =
+            await respuesta.json();
+
+
+        const estado =
+            document.getElementById(
+                "estadoWhatsApp"
+            );
+
+
+        if(
+            datos.conectado
+        ) {
+
+
+            estado.className =
+                "estado conectado";
+
+
+            estado.textContent =
+                "🟢 WhatsApp conectado";
+
+
+        }
+
+        else {
+
+
+            estado.className =
+                "estado desconectado";
+
+
+            estado.textContent =
+                "🔴 WhatsApp desconectado";
+
+        }
+
+
+    }
+
+    catch(error) {
+
+
+        const estado =
+            document.getElementById(
+                "estadoWhatsApp"
+            );
+
+
+        estado.className =
+            "estado desconectado";
+
+
+        estado.textContent =
+            "🔴 Servidor desconectado";
+
+    }
+
+}
+
+
+// ======================================================
+// INICIO
+// ======================================================
+
+crearMensajes();
+
+comprobarWhatsApp();
+
+
+setInterval(
+    comprobarWhatsApp,
+    5000
+);
+
+
+</script>
+
+
+</body>
+
+</html>
